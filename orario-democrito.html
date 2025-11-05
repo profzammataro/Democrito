@@ -1,0 +1,2402 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orario Liceo Democrito</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .search-container {
+            padding: 30px;
+            background: #f8f9fa;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        #searchInput {
+            flex: 1;
+            padding: 15px 20px;
+            font-size: 1.1em;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        #searchInput:focus {
+            border-color: #764ba2;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .search-type {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .search-type button {
+            padding: 12px 30px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .search-type button.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .search-type button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .results-container {
+            padding: 30px;
+        }
+
+        .suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .suggestion-chip {
+            padding: 8px 16px;
+            background: #e9ecef;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9em;
+        }
+
+        .suggestion-chip:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+td {
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #e9ecef;
+            transition: all 0.3s;
+            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+        }
+
+        tr:hover td {
+            background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+            transform: scale(1.02);
+        }
+
+        .time-cell {
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .class-cell {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            font-weight: 600;
+            color: #764ba2;
+        }
+
+       .empty-cell {
+       color: #6c757d;
+       background: linear-gradient(135deg, #a8edea 0%, #c8cdd2 100%);
+       }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+            font-size: 1.1em;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .search-box {
+                flex-direction: column;
+            }
+
+            table {
+                font-size: 0.8em;
+            }
+
+            th, td {
+                padding: 8px 4px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 Liceo Classico Scientifico DEMOCRITO</h1>
+            <p>Orario Docenti e Classi 2025/26</p>
+        </div>
+
+        <div class="search-container">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Cerca docente o classe...">
+            </div>
+            <div class="search-type">
+                <button class="active" onclick="setSearchType('docente')">👨‍🏫 Docente</button>
+                <button onclick="setSearchType('classe')">🎓 Classe</button>
+            </div>
+            <div class="suggestions" id="suggestions"></div>
+        </div>
+
+        <div class="results-container" id="results">
+            <div class="no-results">
+                Inserisci il nome di un docente o una classe per visualizzare l'orario
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const orarioData = [
+ {
+  "lunedì": "8h00",
+  "Column3": "9h00",
+  "Column4": "10h00",
+  "Column5": "11h00",
+  "Column6": "12h00",
+  "Column7": "13h00",
+  "Column8": "14h00\n15h00",
+  "martedì": "8h00",
+  "Column10": "9h00",
+  "Column11": "10h00",
+  "Column12": "11h00",
+  "Column13": "12h00",
+  "Column14": "13h00",
+  "Column15": "14h00\n15h00",
+  "mercoledì": "8h00",
+  "Column17": "9h00",
+  "Column18": "10h00",
+  "Column19": "11h00",
+  "Column20": "12h00",
+  "Column21": "13h00",
+  "Column22": "14h00\n15h00",
+  "giovedì": "8h00",
+  "Column24": "9h00",
+  "Column25": "10h00",
+  "Column26": "11h00",
+  "Column27": "12h00",
+  "Column28": "13h00",
+  "Column29": "14h00\n15h00",
+  "venerdì": "8h00",
+  "Column31": "9h00",
+  "Column32": "10h00",
+  "Column33": "11h00",
+  "Column34": "12h00",
+  "Column35": "13h00\n14h00",
+  "Column36": "15h00"
+ },
+ {
+  "Column1": "AFFUSO",
+  "lunedì": "5L",
+  "Column4": "1L",
+  "Column12": "1I",
+  "Column13": "1L",
+  "Column14": "2I",
+  "mercoledì": "1L",
+  "Column17": "2I",
+  "Column19": "5L",
+  "Column20": "5L",
+  "giovedì": "1I",
+  "Column24": "2I",
+  "Column25": "1L",
+  "Column26": "1L",
+  "venerdì": "1L",
+  "Column31": "1L",
+  "Column32": "1I",
+  "Column33": "2I",
+  "Column34": "2I",
+  "Column37": "AFFUSO"
+ },
+ {
+  "Column1": "BELICCHI",
+  "lunedì": "1L",
+  "Column3": "1L",
+  "martedì": "1L",
+  "Column10": "1L",
+  "Column12": "1L",
+  "Column20": "1L",
+  "Column21": "1L",
+  "giovedì": "1L",
+  "Column24": "1L",
+  "Column37": "BELICCHI"
+ },
+ {
+  "Column1": "BELLIZZI",
+  "lunedì": "3A",
+  "Column4": "3F",
+  "Column5": "3A",
+  "Column6": "4A",
+  "Column7": "4A",
+  "martedì": "5A",
+  "Column10": "5A",
+  "Column11": "3A",
+  "Column12": "3F",
+  "Column19": "3A",
+  "Column20": "5A",
+  "Column21": "5A",
+  "giovedì": "5A",
+  "Column24": "4A",
+  "Column25": "3F",
+  "Column27": "3A",
+  "Column34": "4A",
+  "Column35": "4A",
+  "Column37": "BELLIZZI"
+ },
+ {
+  "Column1": "BENEDETTO",
+  "Column4": "3C",
+  "Column5": "2I",
+  "Column6": "3C",
+  "martedì": "3C",
+  "Column10": "3C",
+  "Column12": "5C",
+  "mercoledì": "2I",
+  "Column17": "4H",
+  "Column18": "3C",
+  "giovedì": "5C",
+  "Column24": "5C",
+  "Column25": "4H",
+  "Column26": "4H",
+  "Column27": "2I",
+  "venerdì": "3C",
+  "Column31": "3C",
+  "Column32": "5C",
+  "Column33": "4H",
+  "Column37": "BENEDETTO"
+ },
+ {
+  "Column1": "BIANCHINI",
+  "Column3": "4I",
+  "Column4": "OP",
+  "Column5": "OP",
+  "Column6": "AIRC",
+  "martedì": "3I",
+  "Column10": "OP",
+  "Column12": "4M",
+  "Column13": "OP",
+  "Column18": "OP",
+  "Column19": "5I",
+  "Column20": "OP",
+  "giovedì": "3I",
+  "Column24": "OP",
+  "Column25": "4M",
+  "Column26": "OP",
+  "venerdì": "4I",
+  "Column31": "5I",
+  "Column32": "AIRC",
+  "Column37": "BIANCHINI"
+ },
+ {
+  "Column1": "BILUCAGLIA",
+  "Column4": "1C",
+  "Column5": "2D",
+  "Column6": "1C",
+  "Column7": "2F",
+  "martedì": "2F",
+  "Column11": "2D",
+  "Column12": "2D",
+  "Column13": "2C",
+  "mercoledì": "2C",
+  "Column17": "2D",
+  "Column18": "1C",
+  "giovedì": "1C",
+  "Column24": "1C",
+  "Column25": "2C",
+  "Column26": "2D",
+  "Column27": "2F",
+  "venerdì": "2D",
+  "Column31": "1C",
+  "Column37": "BILUCAGLIA"
+ },
+ {
+  "Column1": "BOCCATO",
+  "Column5": "AIRC",
+  "Column6": "5C",
+  "Column7": "5C",
+  "martedì": "2C",
+  "Column10": "2C",
+  "Column12": "5B",
+  "Column13": "5B",
+  "Column20": "OPD",
+  "Column21": "4I",
+  "Column22": "4I",
+  "Column25": "1C",
+  "Column26": "1C",
+  "Column27": "4C",
+  "Column28": "4C",
+  "venerdì": "3I",
+  "Column31": "3I",
+  "Column32": "3C",
+  "Column33": "3C",
+  "Column37": "BOCCATO"
+ },
+ {
+  "Column1": "BOIDO",
+  "lunedì": "5F",
+  "Column3": "5F",
+  "Column5": "1F",
+  "Column6": "1F",
+  "Column10": "2F",
+  "Column11": "2F",
+  "Column18": "2E",
+  "Column19": "2E",
+  "Column20": "1E",
+  "Column21": "1E",
+  "Column24": "5E",
+  "Column25": "5E",
+  "Column27": "3E",
+  "Column28": "3E",
+  "Column32": "3F",
+  "Column33": "3F",
+  "Column34": "4E",
+  "Column35": "4E",
+  "Column37": "BOIDO"
+ },
+ {
+  "Column1": "BOLZANELLO",
+  "lunedì": "3E",
+  "Column3": "4B",
+  "Column4": "4E",
+  "Column5": "1C",
+  "martedì": "4B",
+  "Column10": "3E",
+  "Column11": "2C",
+  "Column12": "1C",
+  "Column14": "4B",
+  "mercoledì": "3E",
+  "Column17": "4E",
+  "giovedì": "4B",
+  "Column24": "4E",
+  "Column25": "4B",
+  "venerdì": "1C",
+  "Column32": "2C",
+  "Column33": "4B",
+  "Column34": "4B",
+  "Column37": "BOLZANELLO"
+ },
+ {
+  "Column1": "CALAROTA",
+  "Column6": "AIRC",
+  "Column7": "OPD",
+  "martedì": "OP",
+  "Column10": "OPD",
+  "Column11": "OPD",
+  "Column12": "OP",
+  "Column13": "AIRC",
+  "mercoledì": "OP",
+  "Column17": "AIRC",
+  "Column18": "OP",
+  "Column19": "AIRC",
+  "giovedì": "OPD",
+  "Column24": "OP",
+  "Column25": "OP",
+  "Column26": "OPD",
+  "Column27": "OP",
+  "venerdì": "AIRC",
+  "Column31": "OPD",
+  "Column37": "CALAROTA"
+ },
+ {
+  "Column1": "CALDARESE",
+  "Column4": "5I",
+  "Column6": "1B",
+  "Column7": "1B",
+  "martedì": "4E",
+  "Column10": "4E",
+  "Column11": "3E",
+  "Column18": "OPD",
+  "Column20": "5E",
+  "Column21": "5E",
+  "Column24": "OPD",
+  "Column25": "AIRC",
+  "Column26": "1E",
+  "Column27": "1E",
+  "Column31": "AIRC",
+  "Column32": "2E",
+  "Column33": "2E",
+  "Column37": "CALDARESE"
+ },
+ {
+  "Column1": "CESARI",
+  "lunedì": "1B",
+  "Column3": "4E",
+  "Column4": "5B",
+  "Column5": "VP",
+  "martedì": "5B",
+  "Column10": "3A",
+  "Column12": "4E",
+  "Column13": "VP",
+  "mercoledì": "3A",
+  "Column17": "5B",
+  "Column18": "VP",
+  "Column19": "1B",
+  "giovedì": "4E",
+  "Column24": "5B",
+  "Column25": "3A",
+  "Column27": "VP",
+  "venerdì": "3A",
+  "Column31": "4E",
+  "Column32": "VP",
+  "Column33": "OP",
+  "Column37": "CESARI"
+ },
+ {
+  "Column1": "CIACCIA",
+  "Column3": "2G",
+  "Column4": "1G",
+  "Column26": "2G",
+  "Column27": "1G",
+  "Column37": "CIACCIA"
+ },
+ {
+  "Column1": "CLEMENTELLI",
+  "Column13": "3B",
+  "Column14": "3A",
+  "mercoledì": "2F",
+  "Column17": "3A",
+  "Column18": "3B",
+  "Column19": "3B",
+  "Column27": "3B",
+  "Column28": "3B",
+  "venerdì": "2F",
+  "Column31": "3B",
+  "Column33": "3B",
+  "Column34": "3A",
+  "Column37": "CLEMENTELLI"
+ },
+ {
+  "Column1": "CONTARDI",
+  "Column4": "4G",
+  "Column5": "3G",
+  "Column6": "5G",
+  "Column7": "OP",
+  "Column11": "OP",
+  "Column12": "5G",
+  "Column13": "4G",
+  "Column14": "4G",
+  "mercoledì": "3G",
+  "Column17": "3G",
+  "Column18": "AIRC",
+  "Column19": "4G",
+  "giovedì": "4G",
+  "Column24": "5G",
+  "Column25": "5G",
+  "Column26": "3G",
+  "venerdì": "4G",
+  "Column32": "4G",
+  "Column37": "CONTARDI"
+ },
+ {
+  "Column1": "D'APPOLLONIO",
+  "lunedì": "3D",
+  "Column3": "2D",
+  "Column5": "1D",
+  "Column6": "4D",
+  "Column7": "5F",
+  "martedì": "2D",
+  "Column10": "3D",
+  "Column11": "4H",
+  "mercoledì": "3D",
+  "Column17": "5F",
+  "Column18": "4D",
+  "Column20": "1D",
+  "Column21": "4H",
+  "Column27": "4H",
+  "Column28": "4D",
+  "venerdì": "5F",
+  "Column31": "2D",
+  "Column32": "1D",
+  "Column37": "D'APPOLLONIO"
+ },
+ {
+  "Column1": "d'ERRICO",
+  "lunedì": "2G",
+  "Column3": "1E",
+  "Column4": "2E",
+  "Column5": "2E",
+  "martedì": "2G",
+  "Column10": "2G",
+  "Column11": "2E",
+  "Column13": "2E",
+  "mercoledì": "2G",
+  "Column17": "OP",
+  "Column18": "2G",
+  "Column19": "1E",
+  "giovedì": "2E",
+  "Column24": "2E",
+  "venerdì": "1E",
+  "Column31": "2E",
+  "Column32": "2G",
+  "Column33": "2G",
+  "Column37": "d'ERRICO"
+ },
+ {
+  "Column1": "DANNA",
+  "Column4": "3I",
+  "Column5": "3M",
+  "Column7": "4L",
+  "Column11": "5I",
+  "Column12": "4L",
+  "Column13": "4I",
+  "Column14": "3I",
+  "mercoledì": "5I",
+  "Column18": "4I",
+  "Column19": "3L",
+  "Column20": "5I",
+  "Column26": "4I",
+  "Column27": "3M",
+  "Column28": "5I",
+  "Column32": "4I",
+  "Column33": "3L",
+  "Column34": "4L",
+  "Column35": "4L",
+  "Column37": "DANNA"
+ },
+ {
+  "Column1": "DE ANGELIS",
+  "Column12": "5F",
+  "Column13": "5F",
+  "Column14": "3M",
+  "Column15": "3M",
+  "giovedì": "OPD",
+  "Column24": "OPD",
+  "Column37": "DE ANGELIS"
+ },
+ {
+  "Column1": "DE BLASIO",
+  "lunedì": "1F",
+  "Column3": "1F",
+  "Column4": "1D",
+  "Column5": "1G",
+  "martedì": "2B",
+  "Column10": "1F",
+  "Column12": "1E",
+  "Column13": "1D",
+  "Column14": "1D",
+  "mercoledì": "1F",
+  "Column17": "1E",
+  "giovedì": "1G",
+  "Column24": "1D",
+  "Column25": "1E",
+  "Column26": "2B",
+  "venerdì": "2B",
+  "Column31": "1E",
+  "Column32": "1G",
+  "Column37": "DE BLASIO"
+ },
+ {
+  "Column1": "DENORA",
+  "Column5": "4N",
+  "Column6": "2G",
+  "Column7": "3G",
+  "Column11": "3F",
+  "Column12": "1F",
+  "Column13": "3G",
+  "Column14": "5F",
+  "Column19": "2G",
+  "Column20": "2F",
+  "Column21": "4N",
+  "giovedì": "1F",
+  "Column24": "2F",
+  "Column26": "5F",
+  "Column27": "3F",
+  "Column31": "4N",
+  "Column33": "3G",
+  "Column34": "3F",
+  "Column35": "5F",
+  "Column37": "DENORA"
+ },
+ {
+  "Column1": "DI MAGGIO",
+  "Column4": "5A",
+  "Column5": "5A",
+  "Column6": "4B",
+  "Column7": "4B",
+  "martedì": "4N",
+  "mercoledì": "2B",
+  "Column18": "OPD",
+  "Column19": "4A",
+  "Column20": "4A",
+  "giovedì": "3A",
+  "Column24": "3A",
+  "venerdì": "4H",
+  "Column31": "4H",
+  "Column33": "OPD",
+  "Column34": "3B",
+  "Column37": "DI MAGGIO"
+ },
+ {
+  "Column1": "DI MOLA",
+  "lunedì": "5D",
+  "Column3": "4D",
+  "martedì": "5D",
+  "Column10": "5D",
+  "Column11": "4D",
+  "Column19": "4D",
+  "Column20": "2D",
+  "Column21": "5D",
+  "giovedì": "2D",
+  "Column24": "4D",
+  "Column25": "5D",
+  "Column26": "4D",
+  "Column27": "5D",
+  "venerdì": "5D",
+  "Column32": "2D",
+  "Column33": "2D",
+  "Column34": "4D",
+  "Column35": "4D",
+  "Column37": "DI MOLA"
+ },
+ {
+  "Column1": "DI RIDOLFO",
+  "Column5": "3I",
+  "Column6": "3I",
+  "Column7": "5I",
+  "Column8": "5I",
+  "martedì": "5I",
+  "Column10": "3I",
+  "Column11": "OP",
+  "Column17": "5I",
+  "Column18": "5I",
+  "Column19": "3I",
+  "Column20": "OP",
+  "Column21": "3I",
+  "Column25": "5I",
+  "Column26": "5I",
+  "Column27": "3I",
+  "Column28": "3I",
+  "venerdì": "5I",
+  "Column32": "3I",
+  "Column37": "DI RIDOLFO"
+ },
+ {
+  "Column1": "DI TOMMASO",
+  "Column6": "3B",
+  "Column7": "2C",
+  "martedì": "1C",
+  "Column10": "5C",
+  "Column11": "AIRC",
+  "Column12": "3C",
+  "mercoledì": "4C",
+  "Column17": "OPD",
+  "Column18": "4N",
+  "Column19": "1C",
+  "Column20": "5C",
+  "giovedì": "1B",
+  "Column24": "3B",
+  "Column25": "3C",
+  "venerdì": "2C",
+  "Column31": "4C",
+  "Column33": "4N",
+  "Column34": "1B",
+  "Column37": "DI TOMMASO"
+ },
+ {
+  "Column1": "DIONISI",
+  "lunedì": "5B",
+  "Column3": "3B",
+  "Column5": "5F",
+  "Column6": "5B",
+  "Column7": "3B",
+  "Column12": "3B",
+  "Column13": "4B",
+  "Column14": "5B",
+  "Column20": "4B",
+  "Column21": "4B",
+  "giovedì": "3B",
+  "Column24": "4B",
+  "Column26": "3B",
+  "Column27": "5F",
+  "Column28": "5B",
+  "Column33": "5F",
+  "Column34": "5B",
+  "Column35": "4B",
+  "Column37": "DIONISI"
+ },
+ {
+  "Column1": "DOMENICHELLI",
+  "lunedì": "1A",
+  "Column4": "5D",
+  "Column5": "5D",
+  "Column13": "3D",
+  "Column14": "3D",
+  "mercoledì": "1D",
+  "Column17": "1D",
+  "Column18": "OP",
+  "giovedì": "2A",
+  "Column24": "2A",
+  "Column26": "OP",
+  "Column27": "2D",
+  "Column28": "2D",
+  "Column32": "4D",
+  "Column33": "4D",
+  "Column34": "4M",
+  "Column35": "4M",
+  "Column37": "DOMENICHELLI"
+ },
+ {
+  "Column1": "DONATO",
+  "lunedì": "4G",
+  "Column3": "4G",
+  "Column4": "OP",
+  "martedì": "3G",
+  "Column10": "3G",
+  "Column11": "1G",
+  "Column12": "1G",
+  "mercoledì": "5G",
+  "Column17": "5G",
+  "Column18": "3F",
+  "Column19": "3F",
+  "giovedì": "2G",
+  "Column24": "2G",
+  "Column25": "OP",
+  "Column31": "1F",
+  "Column32": "1F",
+  "Column34": "2F",
+  "Column35": "2F",
+  "Column37": "DONATO"
+ },
+ {
+  "Column1": "DONISI",
+  "Column4": "OP",
+  "Column5": "4D",
+  "Column6": "4H",
+  "Column7": "4D",
+  "martedì": "4D",
+  "Column10": "4D",
+  "Column11": "3D",
+  "Column12": "OP",
+  "mercoledì": "4H",
+  "Column17": "3D",
+  "Column18": "2D",
+  "giovedì": "4D",
+  "Column24": "OP",
+  "venerdì": "4D",
+  "Column31": "4D",
+  "Column33": "3D",
+  "Column34": "2D",
+  "Column35": "4H",
+  "Column37": "DONISI"
+ },
+ {
+  "Column1": "DONNINI",
+  "Column4": "4I",
+  "Column5": "4I",
+  "martedì": "3B",
+  "Column10": "3B",
+  "Column11": "3B",
+  "Column12": "3D",
+  "mercoledì": "4I",
+  "Column17": "4I",
+  "Column19": "3D",
+  "Column20": "3B",
+  "Column21": "3B",
+  "Column27": "4I",
+  "Column28": "4I",
+  "venerdì": "3B",
+  "Column31": "3D",
+  "Column32": "3B",
+  "Column34": "4I",
+  "Column35": "4I",
+  "Column37": "DONNINI"
+ },
+ {
+  "Column1": "EPIFANIA",
+  "martedì": "3E",
+  "Column10": "4G",
+  "Column11": "5G",
+  "Column13": "5I",
+  "Column14": "4M",
+  "Column17": "3E",
+  "Column18": "4G",
+  "Column19": "5G",
+  "Column21": "3M",
+  "Column27": "5I",
+  "Column28": "3M",
+  "Column29": "4M",
+  "Column33": "4G",
+  "Column34": "5G",
+  "Column35": "3E",
+  "Column37": "EPIFANIA"
+ },
+ {
+  "Column1": "FALATO",
+  "lunedì": "1I",
+  "Column3": "2F",
+  "Column5": "2B",
+  "martedì": "1I",
+  "Column10": "2B",
+  "Column11": "1B",
+  "Column12": "2F",
+  "mercoledì": "1B",
+  "Column18": "2F",
+  "Column19": "2F",
+  "Column20": "2B",
+  "giovedì": "2B",
+  "Column24": "2B",
+  "Column25": "2F",
+  "Column26": "1B",
+  "Column27": "1B",
+  "venerdì": "1B",
+  "Column31": "1I",
+  "Column37": "FALATO"
+ },
+ {
+  "Column1": "FANTINI",
+  "Column5": "VP",
+  "Column6": "5E",
+  "Column7": "5E",
+  "Column11": "4G",
+  "Column13": "5E",
+  "Column14": "5E",
+  "Column18": "VP",
+  "Column19": "5E",
+  "Column20": "3E",
+  "Column21": "3E",
+  "Column25": "3E",
+  "Column26": "VP",
+  "Column27": "4G",
+  "Column28": "4G",
+  "Column32": "5E",
+  "Column33": "5E",
+  "Column34": "3E",
+  "Column35": "4G",
+  "Column37": "FANTINI"
+ },
+ {
+  "Column1": "FASANO",
+  "Column5": "4A",
+  "Column6": "4N",
+  "Column7": "4N",
+  "martedì": "4A",
+  "Column11": "5D",
+  "Column12": "5D",
+  "Column13": "4A",
+  "mercoledì": "4N",
+  "Column18": "4A",
+  "Column19": "5D",
+  "Column20": "4N",
+  "Column21": "4A",
+  "giovedì": "5D",
+  "Column24": "4N",
+  "Column32": "4A",
+  "Column33": "4A",
+  "Column34": "4N",
+  "Column35": "4N",
+  "Column37": "FASANO"
+ },
+ {
+  "Column1": "FICO",
+  "Column6": "3M",
+  "Column7": "3M",
+  "martedì": "3D",
+  "Column10": "4H",
+  "Column11": "4N",
+  "Column12": "4N",
+  "Column13": "4H",
+  "mercoledì": "3M",
+  "Column17": "3M",
+  "Column19": "4N",
+  "Column20": "4H",
+  "giovedì": "4N",
+  "Column24": "4H",
+  "Column25": "3D",
+  "Column27": "4N",
+  "Column28": "4H",
+  "venerdì": "3M",
+  "Column31": "3M",
+  "Column37": "FICO"
+ },
+ {
+  "Column1": "FIONDA",
+  "lunedì": "4H",
+  "Column3": "4H",
+  "Column5": "OPD",
+  "Column6": "2D",
+  "Column7": "2D",
+  "Column12": "OPD",
+  "Column13": "4D",
+  "mercoledì": "1G",
+  "Column17": "1G",
+  "Column25": "5B",
+  "Column26": "1D",
+  "Column28": "5G",
+  "Column32": "5G",
+  "Column33": "5B",
+  "Column34": "3D",
+  "Column37": "FIONDA"
+ },
+ {
+  "Column1": "FOLCARELLI",
+  "Column3": "5C",
+  "Column4": "3D",
+  "Column5": "3F",
+  "Column11": "5C",
+  "Column12": "OP",
+  "Column13": "4C",
+  "Column14": "1F",
+  "Column20": "OP",
+  "Column21": "4C",
+  "giovedì": "4C",
+  "Column24": "3F",
+  "Column26": "5C",
+  "Column27": "3D",
+  "Column28": "3D",
+  "venerdì": "3D",
+  "Column31": "3F",
+  "Column32": "OP",
+  "Column33": "1F",
+  "Column37": "FOLCARELLI"
+ },
+ {
+  "Column1": "FORZANO",
+  "lunedì": "4L",
+  "Column3": "5L",
+  "Column4": "3L",
+  "Column5": "5L",
+  "martedì": "5L",
+  "Column11": "4L",
+  "Column12": "3L",
+  "Column13": "3L",
+  "Column14": "4L",
+  "mercoledì": "5L",
+  "Column17": "5L",
+  "Column18": "4L",
+  "Column26": "3L",
+  "Column27": "3L",
+  "Column28": "5L",
+  "Column29": "4L",
+  "Column32": "3L",
+  "Column33": "4L",
+  "Column37": "FORZANO"
+ },
+ {
+  "Column1": "FOSSI",
+  "lunedì": "2F",
+  "Column3": "2L",
+  "Column4": "2L",
+  "Column5": "OP",
+  "Column6": "2F",
+  "martedì": "2L",
+  "Column10": "2L",
+  "Column11": "OPD",
+  "Column13": "2F",
+  "Column20": "2L",
+  "Column21": "2L",
+  "giovedì": "2F",
+  "Column24": "2L",
+  "Column25": "2L",
+  "Column26": "2F",
+  "venerdì": "2L",
+  "Column31": "2F",
+  "Column32": "2F",
+  "Column37": "FOSSI"
+ },
+ {
+  "Column1": "FUSCO",
+  "Column4": "2A",
+  "Column5": "2A",
+  "Column6": "5A",
+  "Column7": "5A",
+  "Column12": "1A",
+  "Column13": "1A",
+  "Column14": "5A",
+  "Column19": "5A",
+  "Column20": "1A",
+  "Column21": "1A",
+  "Column26": "2A",
+  "Column27": "1A",
+  "Column28": "5A",
+  "venerdì": "2A",
+  "Column32": "1A",
+  "Column33": "1A",
+  "Column34": "5A",
+  "Column35": "5A",
+  "Column37": "FUSCO"
+ },
+ {
+  "Column1": "GALDI",
+  "lunedì": "2I",
+  "Column3": "1I",
+  "Column5": "4M",
+  "Column6": "5I",
+  "Column7": "4M",
+  "martedì": "2I",
+  "Column10": "2I",
+  "Column11": "1I",
+  "Column13": "4M",
+  "Column17": "1I",
+  "Column18": "1I",
+  "Column19": "2I",
+  "Column27": "4M",
+  "Column28": "4M",
+  "Column32": "4M",
+  "Column33": "4M",
+  "Column34": "5I",
+  "Column35": "5I",
+  "Column37": "GALDI"
+ },
+ {
+  "Column1": "GALISE",
+  "lunedì": "4E",
+  "Column25": "4E",
+  "venerdì": "4E",
+  "Column37": "GALISE"
+ },
+ {
+  "Column1": "GATTA",
+  "lunedì": "4A",
+  "Column3": "2I",
+  "Column4": "4B",
+  "Column5": "3B",
+  "Column6": "2A",
+  "Column13": "5L",
+  "Column14": "4I",
+  "Column15": "3I",
+  "Column18": "1A",
+  "Column19": "4H",
+  "Column21": "5I",
+  "giovedì": "5B",
+  "Column24": "5A",
+  "Column25": "2B",
+  "venerdì": "1I",
+  "Column31": "3A",
+  "Column32": "1B",
+  "Column33": "1L",
+  "Column37": "GATTA"
+ },
+ {
+  "Column1": "GETULI",
+  "lunedì": "4C",
+  "Column3": "4C",
+  "Column11": "5E",
+  "Column12": "5E",
+  "Column13": "3E",
+  "Column14": "3E",
+  "mercoledì": "4M",
+  "Column18": "3E",
+  "Column19": "4C",
+  "giovedì": "4M",
+  "Column24": "4M",
+  "Column26": "3E",
+  "Column27": "5E",
+  "Column28": "5E",
+  "venerdì": "5E",
+  "Column31": "3E",
+  "Column32": "4C",
+  "Column33": "4C",
+  "Column37": "GETULI"
+ },
+ {
+  "Column1": "GIARDIELLO",
+  "martedì": "1A",
+  "Column10": "1C",
+  "Column11": "1E",
+  "Column12": "2C",
+  "Column14": "2A",
+  "mercoledì": "1E",
+  "Column17": "1A",
+  "Column18": "2A",
+  "Column34": "2C",
+  "Column35": "1C",
+  "Column37": "GIARDIELLO"
+ },
+ {
+  "Column1": "GIOFFRE'",
+  "lunedì": "2A",
+  "Column3": "3A",
+  "martedì": "3A",
+  "Column10": "1A",
+  "Column11": "4A",
+  "Column12": "5A",
+  "mercoledì": "5D",
+  "Column17": "4A",
+  "Column18": "5A",
+  "Column19": "2A",
+  "Column25": "1A",
+  "Column26": "5D",
+  "Column27": "5A",
+  "Column28": "2A",
+  "venerdì": "4A",
+  "Column31": "5D",
+  "Column33": "3A",
+  "Column34": "1A",
+  "Column37": "GIOFFRE'"
+ },
+ {
+  "Column1": "GIORDANO",
+  "lunedì": "1E",
+  "Column3": "3E",
+  "Column4": "5E",
+  "Column6": "2E",
+  "Column7": "3C",
+  "mercoledì": "4D",
+  "Column17": "5D",
+  "Column18": "4E",
+  "Column20": "2C",
+  "Column21": "1C",
+  "venerdì": "4C",
+  "Column31": "5C",
+  "Column37": "GIORDANO"
+ },
+ {
+  "Column1": "GRAVANO",
+  "lunedì": "OP",
+  "Column3": "AIRC",
+  "Column4": "AIRC",
+  "Column5": "OPD",
+  "martedì": "OPD",
+  "Column10": "OPD",
+  "Column11": "OP",
+  "Column12": "AIRC",
+  "mercoledì": "OPD",
+  "Column17": "OP",
+  "Column18": "OP",
+  "Column19": "OPD",
+  "Column24": "OP",
+  "Column25": "OP",
+  "Column26": "AIRC",
+  "Column27": "AIRC",
+  "Column32": "AIRC",
+  "Column33": "AIRC",
+  "Column37": "GRAVANO"
+ },
+ {
+  "Column1": "GRAZIANI",
+  "martedì": "4M",
+  "Column10": "4M",
+  "Column37": "GRAZIANI"
+ },
+ {
+  "Column1": "GRIECO",
+  "Column4": "3G",
+  "Column5": "4G",
+  "Column6": "3G",
+  "Column7": "4G",
+  "Column11": "4M",
+  "Column13": "5G",
+  "Column14": "5G",
+  "mercoledì": "4G",
+  "Column18": "4M",
+  "Column19": "4M",
+  "giovedì": "5G",
+  "Column24": "4G",
+  "Column25": "3G",
+  "Column26": "4G",
+  "Column27": "3G",
+  "Column33": "5G",
+  "Column34": "3G",
+  "Column35": "5G",
+  "Column37": "GRIECO"
+ },
+ {
+  "Column1": "GUARINI",
+  "lunedì": "4N",
+  "Column3": "4N",
+  "Column5": "2C",
+  "Column6": "2C",
+  "Column13": "4N",
+  "Column14": "4N",
+  "mercoledì": "1C",
+  "Column17": "1C",
+  "Column18": "2C",
+  "Column19": "2C",
+  "giovedì": "2C",
+  "Column24": "2C",
+  "Column25": "4N",
+  "Column26": "4N",
+  "Column27": "1C",
+  "venerdì": "4N",
+  "Column31": "2C",
+  "Column32": "1C",
+  "Column37": "GUARINI"
+ },
+ {
+  "Column1": "IANNI'",
+  "lunedì": "3C",
+  "Column3": "1B",
+  "Column4": "4C",
+  "Column17": "4C",
+  "Column19": "3C",
+  "Column20": "1B",
+  "Column33": "1B",
+  "Column34": "4C",
+  "Column35": "3C",
+  "Column37": "IANNI'"
+ },
+ {
+  "Column1": "ISOLA",
+  "Column5": "OP",
+  "Column6": "2B",
+  "Column7": "2B",
+  "martedì": "2A",
+  "Column11": "4B",
+  "Column19": "OP",
+  "Column20": "3A",
+  "Column21": "3A",
+  "giovedì": "1A",
+  "Column24": "1A",
+  "Column26": "4A",
+  "Column27": "4A",
+  "venerdì": "OP",
+  "Column31": "OP",
+  "Column32": "5A",
+  "Column33": "5A",
+  "Column37": "ISOLA"
+ },
+ {
+  "Column1": "LANZA",
+  "Column4": "4N",
+  "Column5": "OP",
+  "Column6": "1E",
+  "Column7": "2E",
+  "martedì": "5C",
+  "Column11": "5B",
+  "Column12": "2E,E+",
+  "Column13": "1E,E+",
+  "Column14": "1E",
+  "mercoledì": "5B",
+  "Column17": "4N",
+  "Column18": "5C",
+  "Column27": "2E",
+  "Column28": "1E",
+  "Column32": "4N",
+  "Column33": "5C",
+  "Column34": "2E",
+  "Column35": "5B",
+  "Column37": "LANZA"
+ },
+ {
+  "Column1": "LICO",
+  "lunedì": "1G",
+  "Column3": "1G",
+  "Column4": "4H",
+  "Column5": "4H",
+  "martedì": "1B",
+  "Column10": "1B",
+  "Column12": "4H",
+  "Column13": "1G",
+  "Column14": "4H",
+  "Column17": "1B",
+  "Column18": "4H",
+  "Column20": "1G",
+  "Column21": "1G",
+  "giovedì": "4H",
+  "Column24": "1G",
+  "Column33": "1G",
+  "Column34": "4H",
+  "Column35": "1B",
+  "Column37": "LICO"
+ },
+ {
+  "Column1": "LOCCI",
+  "lunedì": "5C",
+  "Column3": "5A",
+  "Column4": "3A",
+  "Column10": "4A",
+  "Column11": "3C",
+  "Column12": "3A",
+  "Column13": "5A",
+  "Column14": "4C",
+  "mercoledì": "4A",
+  "Column18": "4C",
+  "Column19": "5C",
+  "Column20": "3C",
+  "Column25": "4C",
+  "Column26": "3A",
+  "Column27": "3C",
+  "Column28": "4A",
+  "venerdì": "5C",
+  "Column31": "5A",
+  "Column37": "LOCCI"
+ },
+ {
+  "Column1": "LUPATTELLI",
+  "lunedì": "5A",
+  "Column3": "2A",
+  "Column4": "1A",
+  "martedì": "5F",
+  "Column10": "5F",
+  "Column11": "5A",
+  "mercoledì": "5A",
+  "Column17": "5A",
+  "Column18": "5F",
+  "Column20": "2A",
+  "giovedì": "5F",
+  "Column24": "5F",
+  "Column25": "5A",
+  "Column26": "5A",
+  "Column28": "1A",
+  "venerdì": "5A",
+  "Column31": "5F",
+  "Column32": "5F",
+  "Column37": "LUPATTELLI"
+ },
+ {
+  "Column1": "MARANO",
+  "lunedì": "AIRC",
+  "Column3": "OP",
+  "Column4": "OPD",
+  "martedì": "OPD",
+  "Column10": "AIRC",
+  "Column11": "OP",
+  "Column12": "OPD",
+  "Column13": "AIRC",
+  "Column17": "OPD",
+  "Column18": "OP",
+  "Column19": "OPD",
+  "Column20": "AIRC",
+  "Column24": "AIRC",
+  "Column25": "OPD",
+  "venerdì": "OPD",
+  "Column31": "OPD",
+  "Column32": "OPD",
+  "Column33": "OP",
+  "Column37": "MARANO"
+ },
+ {
+  "Column1": "MARIANI",
+  "Column4": "2I",
+  "Column5": "1I",
+  "Column6": "3A",
+  "Column7": "3A",
+  "Column8": "OP",
+  "Column11": "2I",
+  "Column12": "2I",
+  "Column13": "OP",
+  "Column20": "2I",
+  "Column21": "2I",
+  "Column22": "OP",
+  "Column25": "2I",
+  "Column26": "2I",
+  "Column27": "1I",
+  "Column28": "3A",
+  "Column32": "3A",
+  "Column34": "1I",
+  "Column35": "1I",
+  "Column37": "MARIANI"
+ },
+ {
+  "Column1": "MAROCCHINI",
+  "lunedì": "4M",
+  "Column4": "1F",
+  "Column5": "2F",
+  "Column17": "2F",
+  "Column18": "1F",
+  "Column20": "4M",
+  "Column21": "4M",
+  "Column33": "2F",
+  "Column34": "1F",
+  "Column37": "MAROCCHINI"
+ },
+ {
+  "Column1": "MATARAZZO",
+  "Column5": "5B",
+  "Column7": "5D",
+  "Column20": "5D",
+  "Column21": "5B",
+  "Column31": "5B",
+  "Column32": "5D",
+  "Column37": "MATARAZZO"
+ },
+ {
+  "Column1": "MONACO",
+  "lunedì": "1C",
+  "Column3": "1C",
+  "Column4": "5G",
+  "martedì": "5G",
+  "Column11": "1C",
+  "Column12": "1C",
+  "Column13": "2B",
+  "Column14": "3G",
+  "Column19": "3G",
+  "Column20": "1C",
+  "Column21": "5G",
+  "giovedì": "5L",
+  "Column24": "5L",
+  "venerdì": "5L",
+  "Column31": "5L",
+  "Column33": "2B",
+  "Column34": "1C",
+  "Column35": "3G",
+  "Column37": "MONACO"
+ },
+ {
+  "Column1": "MUSCHERA'",
+  "Column4": "1I",
+  "Column5": "2G",
+  "Column6": "2I",
+  "Column7": "5G",
+  "Column12": "3I",
+  "Column13": "OP",
+  "Column14": "2G,E+",
+  "mercoledì": "1I",
+  "Column17": "2G",
+  "Column18": "5G",
+  "Column19": "OP",
+  "Column20": "3I",
+  "giovedì": "2I",
+  "Column24": "1I",
+  "Column26": "3I",
+  "venerdì": "2G",
+  "Column31": "5G",
+  "Column32": "2I",
+  "Column37": "MUSCHERA'"
+ },
+ {
+  "Column1": "MUSOTTO",
+  "Column4": "OP",
+  "Column5": "OP",
+  "Column6": "OP",
+  "Column11": "OP",
+  "Column12": "OP",
+  "Column13": "5D",
+  "Column17": "4G",
+  "Column18": "3G",
+  "Column20": "2G",
+  "Column21": "OP",
+  "Column25": "4G",
+  "Column26": "OP",
+  "Column27": "OP",
+  "Column28": "3G",
+  "Column32": "OP",
+  "Column33": "OP",
+  "Column34": "2G",
+  "Column35": "5D",
+  "Column37": "MUSOTTO"
+ },
+ {
+  "Column1": "NASSETTI",
+  "lunedì": "3B",
+  "Column3": "5B",
+  "Column5": "4B",
+  "Column6": "1G",
+  "Column7": "4H",
+  "martedì": "4H",
+  "Column10": "5B",
+  "mercoledì": "4B",
+  "Column17": "3B",
+  "Column18": "1B",
+  "Column19": "2B",
+  "Column25": "3B",
+  "Column26": "5B",
+  "Column27": "2B",
+  "Column28": "4B",
+  "Column31": "1B",
+  "Column32": "4H",
+  "Column34": "1G",
+  "Column37": "NASSETTI"
+ },
+ {
+  "Column1": "NATALINI",
+  "lunedì": "4B",
+  "Column3": "2B",
+  "Column4": "3B",
+  "Column6": "1L",
+  "Column11": "3M",
+  "Column12": "5L",
+  "Column14": "3B",
+  "mercoledì": "3B",
+  "Column17": "4B",
+  "Column18": "2B",
+  "Column20": "3M",
+  "Column21": "5L",
+  "giovedì": "2L",
+  "Column25": "5L",
+  "Column26": "3M",
+  "venerdì": "4B",
+  "Column31": "2B",
+  "Column32": "OP",
+  "Column37": "NATALINI"
+ },
+ {
+  "Column1": "NOALE",
+  "lunedì": "2B",
+  "Column4": "1B",
+  "Column5": "1B",
+  "Column6": "3E",
+  "Column7": "5B",
+  "martedì": "4G",
+  "Column11": "2B",
+  "Column12": "1B",
+  "Column13": "1B",
+  "Column20": "5B",
+  "Column21": "4G",
+  "giovedì": "3E",
+  "Column24": "1B",
+  "Column25": "1B",
+  "venerdì": "5B",
+  "Column31": "4G",
+  "Column32": "2B",
+  "Column33": "3E",
+  "Column37": "NOALE"
+ },
+ {
+  "Column1": "PAGLIARO",
+  "lunedì": "5G",
+  "Column3": "4A",
+  "Column4": "4A",
+  "Column5": "5G",
+  "Column10": "5G",
+  "Column11": "2G",
+  "Column12": "4A",
+  "Column14": "4A",
+  "Column20": "5G",
+  "Column21": "2G",
+  "Column22": "OP",
+  "giovedì": "4A",
+  "Column25": "4A",
+  "Column26": "5G",
+  "Column27": "5G",
+  "Column28": "2G",
+  "venerdì": "5G",
+  "Column31": "4A",
+  "Column37": "PAGLIARO"
+ },
+ {
+  "Column1": "PELOSI",
+  "Column4": "2B",
+  "Column5": "4E",
+  "Column6": "1I",
+  "Column7": "OP",
+  "Column11": "4E",
+  "Column12": "2B",
+  "Column13": "1I",
+  "Column14": "4E",
+  "Column19": "OP",
+  "Column20": "4E",
+  "Column21": "4E",
+  "Column25": "1I",
+  "Column26": "1I",
+  "Column28": "4E",
+  "Column32": "4E",
+  "Column33": "1I",
+  "Column34": "2B",
+  "Column35": "2B",
+  "Column37": "PELOSI"
+ },
+ {
+  "Column1": "PETTOROSSI",
+  "Column3": "3C",
+  "Column4": "5F",
+  "Column5": "5C",
+  "Column6": "3F",
+  "mercoledì": "5C",
+  "Column17": "5C",
+  "Column19": "5F",
+  "Column20": "3F",
+  "Column21": "3C",
+  "giovedì": "3C",
+  "Column24": "3C",
+  "Column25": "5C",
+  "Column34": "3C",
+  "Column35": "5C",
+  "Column37": "PETTOROSSI"
+ },
+ {
+  "Column1": "PISANI",
+  "Column5": "2L",
+  "Column6": "OP",
+  "Column7": "1L",
+  "martedì": "4L",
+  "Column10": "3L",
+  "Column11": "OP",
+  "Column17": "4L",
+  "Column18": "3L",
+  "giovedì": "3L",
+  "Column24": "4L",
+  "Column26": "2L,E+",
+  "Column27": "1L,E+",
+  "venerdì": "OP",
+  "Column31": "2L",
+  "Column32": "1L",
+  "Column37": "PISANI"
+ },
+ {
+  "Column1": "PROPERZI",
+  "lunedì": "3G",
+  "Column3": "3G",
+  "Column5": "3C",
+  "Column13": "3C",
+  "Column14": "3C",
+  "mercoledì": "3C",
+  "Column17": "3C",
+  "Column18": "5B",
+  "Column19": "5B",
+  "Column20": "3G",
+  "giovedì": "3G",
+  "Column24": "3G",
+  "Column26": "3C",
+  "Column27": "5B",
+  "Column28": "3C",
+  "venerdì": "3G",
+  "Column31": "3G",
+  "Column32": "5B",
+  "Column37": "PROPERZI"
+ },
+ {
+  "Column1": "QUAGLIA",
+  "lunedì": "3I",
+  "Column3": "4M",
+  "Column4": "3M",
+  "Column5": "3L",
+  "martedì": "1G",
+  "Column10": "1G",
+  "Column12": "2A",
+  "Column13": "2A",
+  "mercoledì": "3L",
+  "Column17": "4M",
+  "Column18": "3I",
+  "Column19": "3M",
+  "Column25": "2A",
+  "Column26": "1G",
+  "venerdì": "1G",
+  "Column31": "1G",
+  "Column33": "2A",
+  "Column34": "2A",
+  "Column37": "QUAGLIA"
+ },
+ {
+  "Column1": "QUIRCIO",
+  "lunedì": "3M",
+  "Column3": "3M",
+  "Column4": "4M",
+  "Column6": "3D",
+  "Column7": "3D",
+  "martedì": "3M",
+  "Column10": "3M",
+  "Column20": "3D",
+  "Column21": "3D",
+  "Column22": "OP",
+  "Column24": "3M",
+  "Column25": "3M",
+  "Column26": "4M",
+  "venerdì": "4M",
+  "Column31": "4M",
+  "Column32": "OP",
+  "Column33": "3M",
+  "Column34": "3M",
+  "Column37": "QUIRCIO"
+ },
+ {
+  "Column1": "RAGOZZINO",
+  "lunedì": "4I",
+  "Column3": "5I",
+  "Column5": "5E",
+  "Column6": "4E",
+  "Column7": "3E",
+  "Column11": "4I",
+  "Column12": "5I",
+  "mercoledì": "4E",
+  "Column17": "3F",
+  "Column18": "5E",
+  "Column19": "3E",
+  "Column24": "5I",
+  "Column25": "4I",
+  "Column27": "4E",
+  "Column28": "3F",
+  "venerdì": "3F",
+  "Column31": "5E",
+  "Column32": "3E",
+  "Column37": "RAGOZZINO"
+ },
+ {
+  "Column1": "RICCIARDI",
+  "Column5": "OP",
+  "Column6": "4L",
+  "Column7": "3L",
+  "mercoledì": "4L",
+  "Column17": "3L",
+  "Column18": "3M",
+  "Column20": "OPD",
+  "giovedì": "3M",
+  "Column24": "OPD",
+  "Column25": "OPD",
+  "Column26": "OPD",
+  "Column27": "5L",
+  "venerdì": "OPD",
+  "Column31": "AIRC",
+  "Column32": "5L",
+  "Column33": "OP",
+  "Column37": "RICCIARDI"
+ },
+ {
+  "Column1": "RIGATUSO",
+  "lunedì": "5I",
+  "Column3": "3I",
+  "martedì": "4I",
+  "Column10": "5I",
+  "Column12": "4I",
+  "Column13": "3I",
+  "Column14": "5I",
+  "mercoledì": "3I",
+  "Column17": "3I",
+  "Column19": "4I",
+  "Column20": "4I",
+  "giovedì": "5I",
+  "Column24": "4I",
+  "Column25": "3I",
+  "Column31": "4I",
+  "Column32": "5I",
+  "Column33": "5I",
+  "Column35": "3I",
+  "Column37": "RIGATUSO"
+ },
+ {
+  "Column1": "RULLI",
+  "Column4": "1E",
+  "Column5": "1A",
+  "martedì": "2E",
+  "Column10": "1E",
+  "Column11": "2A",
+  "Column13": "3A",
+  "mercoledì": "2A",
+  "Column17": "2A",
+  "Column18": "3A",
+  "Column19": "1A",
+  "Column26": "1A",
+  "Column27": "2A",
+  "Column28": "2E",
+  "venerdì": "2E",
+  "Column31": "2A",
+  "Column32": "2A",
+  "Column34": "1E",
+  "Column35": "3A",
+  "Column37": "RULLI"
+ },
+ {
+  "Column1": "SANTANIELLO",
+  "lunedì": "5E",
+  "Column3": "3D",
+  "Column4": "4D",
+  "Column12": "4D",
+  "Column13": "2D",
+  "Column14": "2E",
+  "mercoledì": "2E",
+  "Column17": "4D",
+  "Column18": "5D",
+  "Column19": "2D",
+  "Column21": "1D",
+  "giovedì": "3D",
+  "Column24": "5D",
+  "Column25": "1D",
+  "Column26": "5E",
+  "Column32": "3D",
+  "Column33": "5D",
+  "Column35": "5E",
+  "Column37": "SANTANIELLO"
+ },
+ {
+  "Column1": "SANTINI",
+  "lunedì": "2E",
+  "Column3": "5E",
+  "Column4": "3E",
+  "Column5": "3E",
+  "Column6": "1D",
+  "martedì": "5E",
+  "Column10": "5E",
+  "Column11": "1D",
+  "mercoledì": "5E",
+  "Column17": "5E",
+  "Column18": "1E",
+  "Column20": "2E",
+  "giovedì": "5E",
+  "Column24": "3E",
+  "venerdì": "3E",
+  "Column31": "OP",
+  "Column32": "1E",
+  "Column34": "5E",
+  "Column37": "SANTINI"
+ },
+ {
+  "Column1": "SCHIFANO",
+  "Column6": "4I",
+  "Column7": "4I",
+  "Column10": "4I",
+  "Column11": "3I",
+  "Column12": "3M",
+  "Column13": "3M",
+  "Column33": "3I",
+  "Column34": "3I",
+  "Column35": "3M",
+  "Column37": "SCHIFANO"
+ },
+ {
+  "Column1": "SIDERI",
+  "Column5": "OP",
+  "Column6": "2L",
+  "Column7": "2L",
+  "Column13": "OP",
+  "Column14": "5L",
+  "Column15": "5L",
+  "Column17": "OP",
+  "Column18": "1L",
+  "Column19": "1L",
+  "Column20": "1I",
+  "Column21": "1I",
+  "Column25": "4L",
+  "Column26": "4L",
+  "Column28": "3L",
+  "Column29": "3L",
+  "venerdì": "2I",
+  "Column31": "2I",
+  "Column32": "OP",
+  "Column37": "SIDERI"
+ },
+ {
+  "Column1": "SIRLETO",
+  "lunedì": "2C",
+  "Column3": "2C",
+  "Column4": "2D",
+  "Column5": "1L",
+  "martedì": "1D",
+  "Column10": "2D",
+  "Column11": "1L",
+  "mercoledì": "2D",
+  "Column17": "2C",
+  "Column19": "1D",
+  "giovedì": "1D",
+  "Column24": "2D",
+  "Column25": "2D",
+  "Column26": "2C",
+  "venerdì": "1D",
+  "Column31": "1D",
+  "Column33": "2C",
+  "Column34": "1L",
+  "Column37": "SIRLETO"
+ },
+ {
+  "Column1": "SPINOLA",
+  "Column6": "5F",
+  "Column7": "3F",
+  "Column10": "4B",
+  "Column11": "5F",
+  "Column13": "3F",
+  "Column14": "3F",
+  "Column18": "4B",
+  "Column19": "4B",
+  "Column20": "5F",
+  "Column21": "5F",
+  "Column25": "5F",
+  "Column26": "4B",
+  "Column27": "4B",
+  "Column28": "5F",
+  "Column31": "4B",
+  "Column32": "4B",
+  "Column34": "5F",
+  "Column35": "3F",
+  "Column37": "SPINOLA"
+ },
+ {
+  "Column1": "SUMMA",
+  "lunedì": "4D",
+  "Column3": "5D",
+  "Column5": "3D",
+  "Column6": "5D",
+  "Column7": "4E",
+  "Column13": "4E",
+  "Column14": "5D",
+  "Column18": "3D",
+  "Column19": "4E",
+  "Column20": "4D",
+  "Column21": "4D",
+  "Column24": "3D",
+  "Column25": "4D",
+  "Column26": "4E",
+  "Column27": "4D",
+  "Column28": "5D",
+  "Column33": "4E",
+  "Column34": "5D",
+  "Column37": "SUMMA"
+ },
+ {
+  "Column1": "TANCREDI",
+  "lunedì": "1D",
+  "Column3": "1D",
+  "martedì": "1F",
+  "Column10": "3F",
+  "Column11": "2L",
+  "Column12": "1D",
+  "Column13": "1F",
+  "mercoledì": "3F",
+  "Column18": "1D",
+  "Column19": "2L",
+  "Column20": "1F",
+  "Column21": "1F",
+  "Column24": "1F",
+  "Column25": "1F",
+  "Column26": "3F",
+  "Column33": "1D",
+  "Column34": "1D",
+  "Column35": "2L",
+  "Column37": "TANCREDI"
+ },
+ {
+  "Column1": "TEDESCHI",
+  "Column4": "5C",
+  "Column6": "4C",
+  "Column7": "4C",
+  "Column11": "4C",
+  "Column12": "4C",
+  "Column13": "5C",
+  "Column14": "5C",
+  "Column20": "4C",
+  "Column21": "5C",
+  "Column26": "4C",
+  "Column27": "5C",
+  "Column28": "5C",
+  "Column34": "5C",
+  "Column35": "4C",
+  "Column37": "TEDESCHI"
+ },
+ {
+  "Column1": "TETI",
+  "lunedì": "3L",
+  "Column3": "3L",
+  "Column4": "4L",
+  "Column5": "4L",
+  "martedì": "3L",
+  "Column10": "4L",
+  "Column11": "3L",
+  "Column17": "2L",
+  "Column18": "2L",
+  "Column20": "4L",
+  "Column21": "4L",
+  "giovedì": "4L",
+  "Column24": "3L",
+  "Column25": "3L",
+  "venerdì": "3L",
+  "Column31": "4L",
+  "Column33": "2L",
+  "Column34": "2L",
+  "Column37": "TETI"
+ },
+ {
+  "Column1": "TODARELLO",
+  "Column5": "OP",
+  "Column6": "5L",
+  "Column7": "5L",
+  "Column10": "5L",
+  "Column11": "5L",
+  "Column13": "4L",
+  "Column14": "3L",
+  "Column18": "5L",
+  "Column19": "4L",
+  "Column20": "3L",
+  "Column21": "3L",
+  "Column25": "OP",
+  "Column26": "5L",
+  "Column27": "4L",
+  "Column28": "4L",
+  "Column33": "5L",
+  "Column34": "5L",
+  "Column35": "3L",
+  "Column37": "TODARELLO"
+ },
+ {
+  "Column1": "TOMASSETTI",
+  "lunedì": "2L",
+  "Column3": "2E",
+  "Column5": "1E",
+  "Column6": "1A",
+  "martedì": "1E",
+  "Column10": "2E",
+  "Column11": "1A",
+  "mercoledì": "1A",
+  "Column17": "2E",
+  "giovedì": "1E",
+  "Column24": "1E",
+  "Column25": "2E",
+  "Column26": "2E",
+  "Column27": "2L",
+  "venerdì": "1A",
+  "Column31": "1A",
+  "Column32": "2L",
+  "Column33": "1E",
+  "Column37": "TOMASSETTI"
+ },
+ {
+  "Column1": "TUBITO",
+  "lunedì": "2D",
+  "Column3": "5G",
+  "Column4": "2F",
+  "Column6": "4M",
+  "martedì": "3F",
+  "Column10": "1D",
+  "Column11": "3G",
+  "Column12": "4G",
+  "Column13": "2L",
+  "mercoledì": "5F",
+  "Column17": "1F",
+  "Column19": "1G",
+  "Column26": "3D",
+  "Column27": "2G",
+  "Column28": "4N",
+  "venerdì": "4L",
+  "Column31": "3L",
+  "Column32": "3M",
+  "Column37": "TUBITO"
+ },
+ {
+  "Column1": "VECCHIONE",
+  "lunedì": "3F",
+  "Column3": "3F",
+  "Column4": "2G",
+  "Column5": "4C",
+  "martedì": "4C",
+  "Column10": "4C",
+  "Column11": "1F",
+  "Column12": "2G",
+  "Column13": "2G",
+  "Column19": "1F",
+  "Column21": "3F",
+  "giovedì": "3F",
+  "Column24": "4C",
+  "Column25": "2G",
+  "Column26": "1F",
+  "Column27": "1F",
+  "venerdì": "1F",
+  "Column31": "2G",
+  "Column37": "VECCHIONE"
+ },
+ {
+  "Column1": "VELTRI",
+  "Column4": "2C",
+  "Column5": "OPD",
+  "Column6": "4G",
+  "Column7": "1C",
+  "Column12": "3G",
+  "Column13": "1C",
+  "Column14": "1G",
+  "Column18": "1G",
+  "Column19": "OP",
+  "Column20": "4G",
+  "Column21": "3G",
+  "Column25": "1G,E+",
+  "Column27": "2C",
+  "Column28": "1G",
+  "Column32": "3G",
+  "Column33": "1C",
+  "Column34": "4G",
+  "Column35": "2C",
+  "Column37": "VELTRI"
+ },
+ {
+  "Column1": "VENUTA",
+  "Column3": "4L",
+  "Column4": "5L",
+  "Column6": "3L",
+  "Column7": "3I",
+  "Column10": "1I",
+  "Column12": "2L",
+  "Column13": "2I",
+  "Column14": "1L",
+  "mercoledì": "2L",
+  "Column17": "1L",
+  "Column18": "2I",
+  "Column19": "1I",
+  "giovedì": "4I",
+  "Column24": "3I",
+  "Column32": "4L",
+  "Column33": "4I",
+  "Column34": "3L",
+  "Column35": "5L",
+  "Column37": "VENUTA"
+ }
+];
+
+        const giorni = ['lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì'];
+        const ore = ['8h00', '9h00', '10h00', '11h00', '12h00', '13h00', '14h00'];
+        
+        let searchType = 'docente';
+        let allDocenti = [];
+        let allClassi = new Set();
+
+        // Estrai tutti i docenti e le classi
+        orarioData.forEach(doc => {
+            if (doc.Column1 && doc.Column1 !== 'Column1') {
+                allDocenti.push(doc.Column1);
+            }
+            Object.keys(doc).forEach(key => {
+                if (doc[key] && doc[key].length <= 3 && doc[key].match(/^[0-9][A-Z]$/)) {
+                    allClassi.add(doc[key]);
+                }
+            });
+        });
+
+        allClassi = Array.from(allClassi).sort();
+
+        function setSearchType(type) {
+            searchType = type;
+            document.querySelectorAll('.search-type button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            document.getElementById('searchInput').value = '';
+            showSuggestions('');
+            document.getElementById('results').innerHTML = '<div class="no-results">Inserisci il nome di un ' + (type === 'docente' ? 'docente' : 'una classe') + ' per visualizzare l\'orario</div>';
+        }
+
+        function showSuggestions(query) {
+            const suggestionsDiv = document.getElementById('suggestions');
+            query = query.toLowerCase().trim();
+            
+            if (!query) {
+                if (searchType === 'docente') {
+                    suggestionsDiv.innerHTML = '<p style="margin-bottom: 10px;">Docenti disponibili:</p>';
+                    allDocenti.slice(0, 10).forEach(doc => {
+                        suggestionsDiv.innerHTML += `<span class="suggestion-chip" onclick="selectSuggestion('${doc}')">${doc}</span>`;
+                    });
+                } else {
+                    suggestionsDiv.innerHTML = '<p style="margin-bottom: 10px;">Classi disponibili:</p>';
+                    allClassi.slice(0, 15).forEach(classe => {
+                        suggestionsDiv.innerHTML += `<span class="suggestion-chip" onclick="selectSuggestion('${classe}')">${classe}</span>`;
+                    });
+                }
+                return;
+            }
+
+            let suggestions = [];
+            if (searchType === 'docente') {
+                suggestions = allDocenti.filter(doc => 
+                    doc.toLowerCase().includes(query)
+                ).slice(0, 10);
+            } else {
+                suggestions = allClassi.filter(classe => 
+                    classe.toLowerCase().includes(query)
+                ).slice(0, 15);
+            }
+
+            if (suggestions.length > 0) {
+                suggestionsDiv.innerHTML = '';
+                suggestions.forEach(item => {
+                    suggestionsDiv.innerHTML += `<span class="suggestion-chip" onclick="selectSuggestion('${item}')">${item}</span>`;
+                });
+            } else {
+                suggestionsDiv.innerHTML = '<p style="color: #6c757d;">Nessun risultato trovato</p>';
+            }
+        }
+
+        function selectSuggestion(value) {
+            document.getElementById('searchInput').value = value;
+            search(value);
+        }
+
+        function search(query) {
+            if (!query) query = document.getElementById('searchInput').value;
+            query = query.trim().toUpperCase();
+            
+            const resultsDiv = document.getElementById('results');
+            
+            if (!query) {
+                resultsDiv.innerHTML = '<div class="no-results">Inserisci un termine di ricerca</div>';
+                return;
+            }
+
+            if (searchType === 'docente') {
+                searchDocente(query, resultsDiv);
+            } else {
+                searchClasse(query, resultsDiv);
+            }
+        }
+
+        function searchDocente(nome, resultsDiv) {
+            const docente = orarioData.find(d => 
+                d.Column1 && d.Column1.toUpperCase() === nome
+            );
+
+            if (!docente) {
+                resultsDiv.innerHTML = '<div class="no-results">Docente non trovato</div>';
+                return;
+            }
+
+            let html = '<h2 style="color: #667eea; margin-bottom: 20px;">Orario del Prof./Prof.ssa ' + docente.Column1 + '</h2>';
+            html += '<table><thead><tr><th>Ora</th>';
+            
+            giorni.forEach(giorno => {
+                html += '<th>' + giorno.charAt(0).toUpperCase() + giorno.slice(1) + '</th>';
+            });
+            html += '</tr></thead><tbody>';
+
+            const colonneGiorni = {
+                'lunedì': ['lunedì', 'Column3', 'Column4', 'Column5', 'Column6', 'Column7', 'Column8'],
+                'martedì': ['martedì', 'Column10', 'Column11', 'Column12', 'Column13', 'Column14', 'Column15'],
+                'mercoledì': ['mercoledì', 'Column17', 'Column18', 'Column19', 'Column20', 'Column21', 'Column22'],
+                'giovedì': ['giovedì', 'Column24', 'Column25', 'Column26', 'Column27', 'Column28', 'Column29'],
+                'venerdì': ['venerdì', 'Column31', 'Column32', 'Column33', 'Column34', 'Column35']
+            };
+
+            ore.forEach((ora, idx) => {
+                html += '<tr><td class="time-cell">' + ora + '</td>';
+                
+                giorni.forEach(giorno => {
+                    const colonne = colonneGiorni[giorno];
+                    const classe = docente[colonne[idx]] || '';
+                    
+                    if (classe && classe !== 'OP' && classe !== 'OPD' && classe !== 'AIRC' && classe !== 'VP') {
+                        html += '<td class="class-cell">' + classe + '</td>';
+                    } else if (classe) {
+                        html += '<td style="color: #6c757d; font-style: italic;">' + classe + '</td>';
+                    } else {
+                        html += '<td class="-cell"> </td>';
+                    }
+                });
+                
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            resultsDiv.innerHTML = html;
+        }
+
+        function searchClasse(classe, resultsDiv) {
+            const orarioClasse = {};
+            
+            const colonneGiorni = {
+                'lunedì': ['lunedì', 'Column3', 'Column4', 'Column5', 'Column6', 'Column7', 'Column8'],
+                'martedì': ['martedì', 'Column10', 'Column11', 'Column12', 'Column13', 'Column14', 'Column15'],
+                'mercoledì': ['mercoledì', 'Column17', 'Column18', 'Column19', 'Column20', 'Column21', 'Column22'],
+                'giovedì': ['giovedì', 'Column24', 'Column25', 'Column26', 'Column27', 'Column28', 'Column29'],
+                'venerdì': ['venerdì', 'Column31', 'Column32', 'Column33', 'Column34', 'Column35']
+            };
+
+            giorni.forEach(giorno => {
+                orarioClasse[giorno] = Array(7).fill('');
+            });
+
+            orarioData.forEach(docente => {
+                const nomeDocente = docente.Column1;
+                
+                giorni.forEach(giorno => {
+                    const colonne = colonneGiorni[giorno];
+                    colonne.forEach((col, idx) => {
+                        const classeCell = docente[col];
+                        if (classeCell && classeCell.includes(classe)) {
+                            orarioClasse[giorno][idx] = nomeDocente;
+                        }
+                    });
+                });
+            });
+
+            let html = '<h2 style="color: #667eea; margin-bottom: 20px;">Orario della Classe ' + classe + '</h2>';
+            html += '<table><thead><tr><th>Ora</th>';
+            
+            giorni.forEach(giorno => {
+                html += '<th>' + giorno.charAt(0).toUpperCase() + giorno.slice(1) + '</th>';
+            });
+            html += '</tr></thead><tbody>';
+
+            ore.forEach((ora, idx) => {
+                html += '<tr><td class="time-cell">' + ora + '</td>';
+                
+                giorni.forEach(giorno => {
+                    const docente = orarioClasse[giorno][idx];
+                    
+                    if (docente) {
+                        html += '<td class="class-cell">' + docente + '</td>';
+                    } else {
+                        html += '<td class="empty-cell"> </td>';
+                    }
+                });
+                
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            resultsDiv.innerHTML = html;
+        }
+
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            showSuggestions(e.target.value);
+        });
+
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                search();
+            }
+        });
+
+        // Mostra suggerimenti iniziali
+       // showSuggestions('');
+    </script>
+</body>
+</html>>
+</body>
+</html>
